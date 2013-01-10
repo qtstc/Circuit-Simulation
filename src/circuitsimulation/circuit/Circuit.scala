@@ -29,7 +29,7 @@ import ParallelSimulation._
 class Circuit(finishSimulation:Int) {
   def this(){this(-1)}
   
-  val clock = new Clock(finishSimulation)
+  private val clock = new Clock(finishSimulation)
   
   //Tasks to be done by a circuit element.
   case class SetSignal(sig: Boolean)

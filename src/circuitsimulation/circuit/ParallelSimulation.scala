@@ -124,7 +124,7 @@ object ParallelSimulation {
       case n if n>0 => 
         if(n == currentTime)
           (true,"Clock exiting at time "+currentTime + " as requested.")
-        else if(n > currentTime)
+        else if(n < currentTime)
           (true,"Error, clock should have exited at "+ n+".")
         else 
           (false,"");
