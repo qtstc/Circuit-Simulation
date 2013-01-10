@@ -38,10 +38,13 @@ object ParallelSimulation {
   case object Start//Message used to sginal the start of the simulation
   case object Stop//Message used to signal the end of the simualation
   
+  case object Finished//Message sent to analyzer to indicate the end of the simulation
+  
   //Message used to add a task to the simulation.
   //It is always sent from the simulant to the clock
   //since the clock keeps track of all the tasks.
   case class AfterDelay(delay: Int, msg: Any, target: Actor)
+  case class Log(msg:String, time:Int)//To be sent to the analyzer for logging 
 
   class Clock(finishAtTime:Int) extends Actor {
     
@@ -56,8 +59,10 @@ object ParallelSimulation {
     //the list should be empty by the end of the simulation.
     private var agenda: List[WorkItem] = List()
     
+    private var analyzer:Actor = null
+    
     //List of simulants.
-    var allSimulants: List[Simulant] = List()
+    private var allSimulants: List[Simulant] = List()
     
     //List of simulants that have not responded to the clock's Ping in each stage.
     //At the beginning of each stage, all simulants are put into this list.
@@ -72,7 +77,38 @@ object ParallelSimulation {
     def add(sim: Simulant) {
       allSimulants = sim :: allSimulants
     }
-
+    
+        
+    /**
+     * Set the analyzer of this simulation.
+     * An analyzer is used to run a simulation multiple times
+     * and analyze the result.
+     */
+    def setAnalyzer(analyzer:Actor)
+    {
+       this.analyzer = analyzer
+    }
+    
+   /**
+    * Reset the simulation.
+    * Empty the task list and set the current time to 0 again.
+    * Also call reset() and restart on all simulants.
+    * Only call this method when the simulation already exited
+    */
+    def reset()
+    {
+      running = false
+      currentTime = 0
+      busySimulants = Set.empty
+      agenda = List()
+      restart()
+      for(simulant<-allSimulants)
+      {
+        simulant.restart()
+        simulant.reset()
+      }
+    }
+    
     /**
      * Contains the task that is to be done by a simulant.
      * It is used in the task scheduling message sent from simulants 
@@ -110,7 +146,7 @@ object ParallelSimulation {
     /**
      * This method checkes whether the simulation has ended.
      */
-    def isSimulationFinished:(Boolean,String) = finishAtTime match
+    private def isSimulationFinished:(Boolean,String) = finishAtTime match
     {
       //If the user did not specify a time at which the simulation needs to end,
       //pnly end when the list of tasks is empty.
@@ -136,19 +172,19 @@ object ParallelSimulation {
     /**
      * Advance to the next stage.
      */
-    def advance() {
+    private def advance() {
       //First check whether the simulation has finished.
       val finished = isSimulationFinished;
       if(finished._1)
       {
-        println(finished._2)
+        log(finished._2)
         self ! Stop
         return
       }
       
       //Increase current time maintained by the clock by one.
       currentTime += 1
-      println("Advancing to time " + currentTime)
+      log("Advancing to time " + currentTime)
 
       //Send the tasks to be completed at the current stage to the simulants
       processCurrentEvents()
@@ -176,14 +212,14 @@ object ParallelSimulation {
       //Send them to the simulants
       for (WorkItem(time, msg, target) <- todoNow) {
         assert(time == currentTime)
-        target ! msg
+        target ! (msg,time)
       }
     }
 
     /**
      * React to a single message.
      */
-    def reactToOneMessage() {
+    private def reactToOneMessage() {
       react {
         //A message send from a simulant to the clock.
         //Used to add msg(a task) to the list of tasks maintained by the clock
@@ -203,41 +239,55 @@ object ParallelSimulation {
 
         //Message that stops the simulation
         case Stop =>
+          //First stop all simulants
           for (sim <- allSimulants)
             sim ! Stop
+          //Then send a message to analyzer indicating
+          //current simulation is done.
+          //This message is supposed to be sent after calling exit()
+          //because the analyzer might need to call restart()
+          //on this Clock instance to start a new simulation. 
+          //And restart() throws an exception
+          //if the Clock does not call exit()(become terminated) first.
+          //However, because it is impossible to send any message after calling
+          //exit(), we have to send out the finish message before calling exit()
+          if(analyzer != null)
+          {
+        	  analyzer ! Finished
+          }
+          //No computing intensive task should be put here.
+          //Otherwise the analyzer, which runs on another thread,
+          //might call restart() on this clock instance before exit()
+          //is called.
+          //In the current implementation, the analyzer first check
+          //whether the clock is terminated before calling restart().
+          //If the clock is not terminated, it just keep checking
+          //until it is terminated.
           exit()
       }
     }
     
-   /**
-    * Reset the simulation.
-    * Empty the task list and set the current time to 0 again.
-    * Also call reset() and restart on all simulants.
-    * Only call this method when the simulation already exited
-    */
-    def reset()
+    /**
+     * Log a message.
+     */
+    private def log(msg:String)
     {
-      running = false
-      currentTime = 0
-      busySimulants = Set.empty
-      agenda = List()
-      restart()
-      for(simulant<-allSimulants)
-      {
-        simulant.reset()
-        simulant.restart()
-      }
+      //If no analyzer is attached, simply print the message.
+      if(analyzer == null)
+        println(msg)
+      else
+        analyzer ! Log(msg,currentTime)
     }
   }
 
   /**
    * Super class inherited by all circuit components.
-   * All simulants mantain a instance of clock which
+   * All simulants maintain a instance of clock which
    * the simulant used communicates with.
    */
   trait Simulant extends Actor {
     val clock: Clock
-    def handleSimMessage(msg: Any)
+    def handleSimMessage(msg: Any,time:Int)
     def simStarting() {}
     def reset(){}
     def act() {
@@ -247,7 +297,7 @@ object ParallelSimulation {
           case Ping(time) =>
             if (time == 1) simStarting()
             clock ! Pong(time, self)
-          case msg => handleSimMessage(msg)
+          case (msg,time:Int) => handleSimMessage(msg,time)
         }
       }
     }

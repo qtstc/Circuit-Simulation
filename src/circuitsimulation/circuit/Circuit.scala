@@ -49,9 +49,16 @@ class Circuit(finishSimulation:Int) {
 
     private var sigVal = init
     private var observers: List[Actor] = List()
-    def handleSimMessage(msg: Any) {
+    def handleSimMessage(msg: Any,time:Int) {
       msg match {
         case SetSignal(s) =>
+          //If we remove the check here,
+          //the simulation will run less efficiently.
+          //However, this check is also causing some
+          //uncertainties in the result because
+          //if the value of a wire is changed multiple
+          //times in one stage, the sequence at which 
+          //the change happens is not guaranteed
           if (s != sigVal) {
             sigVal = s
             signalObservers()
@@ -61,10 +68,12 @@ class Circuit(finishSimulation:Int) {
 
     def signalObservers() {
       for (obs <- observers)
+      {
         clock ! AfterDelay(
           WireDelay,
           SignalChanged(this, sigVal),
           obs)
+      }
     }
     
     def set(sig:Boolean){sigVal = sig}
@@ -88,7 +97,7 @@ class Circuit(finishSimulation:Int) {
     in1.addObserver(this)
     in2.addObserver(this)
     var s1, s2 = false
-    def handleSimMessage(msg: Any) {
+    def handleSimMessage(msg: Any,time:Int) {
       msg match {
         case SignalChanged(w, sig) =>
           if (w == in1)
@@ -133,7 +142,7 @@ class Circuit(finishSimulation:Int) {
     val clock = Circuit.this.clock
     clock.add(this)
     wire.addObserver(this)
-    def handleSimMessage(msg: Any) {
+    def handleSimMessage(msg: Any,time:Int) {
       msg match {
         case SignalChanged(w, s) =>
           println("signal " + w + " changed to " + s)
@@ -156,6 +165,23 @@ class Circuit(finishSimulation:Int) {
   {
     clock.reset();
   }
-
+  
+  /**
+   * Set the analyzer for this circuit.
+   * An analyzer is used to run and analyze the circuit.
+   * Use null if no analyzer is needed.
+   */
+  def setAnalyzer(analyzer:Actor)
+  {
+    clock.setAnalyzer(analyzer)
+  }
+  
+  /**
+   * Get the state of the clock.
+   * Used to hide the implementation of clock
+   * from users of this class.
+   */
+  def getClockState:Actor.State.Value = clock.getState
+  
   def start() { clock ! Start }
 }

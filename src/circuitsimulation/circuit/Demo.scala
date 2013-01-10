@@ -1,9 +1,11 @@
 package circuitsimulation.circuit
 
 import circuitsimulation.circuit.elements.CommonGates
+import circuitsimulation.analyzer._
 
 object Demo {
   def main(args: Array[String]) {
+    
     val circuit = new Circuit() with CommonGates
     import circuit._
     
@@ -13,15 +15,11 @@ object Demo {
     probe(in1)
     probe(in2)
     inverter(in1,in2)
-    circuit.start()
-    for(i <- 4 to 1000000000)
-      i*(i-1)/(i-2)
-    println("")
-    println("")
-    println("")
-    circuit.reset
-    in1.set(true);
-    circuit.start
+    
+    //circuit.start
+    
+    val analyzer = new SingleRunAnalyzer(circuit)
+    analyzer.startSimulation
     
   }
 }
