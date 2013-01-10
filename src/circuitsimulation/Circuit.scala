@@ -94,7 +94,7 @@ class Circuit {
       }
     }
   }
-
+  
   def norGate(in1: Wire, in2: Wire, output: Wire) =
     new Gate(in1, in2, output) {
       val delay = NorGateDelay
@@ -113,7 +113,14 @@ class Circuit {
       def computeOutput(s1: Boolean, ignored: Boolean) = !s1
     }
 
-  def probe(wire: Wire) = new Simulant {
+  /**
+   * Probe class is used to make users aware of the state 
+   * of a Wire instance. It is created as a class because 
+   * we sometimes need to check whether a simulant instance
+   * is a valid circuit element or only a probe.
+   */
+  protected class Probe(wire: Wire) extends Simulant
+  {
     val clock = Circuit.this.clock
     clock.add(this)
     wire.addObserver(this)
@@ -124,6 +131,8 @@ class Circuit {
       }
     }
   }
+  
+  def probe(wire: Wire) = new Probe(wire)
 
   def start() { clock ! Start }
 }

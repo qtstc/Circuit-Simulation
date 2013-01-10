@@ -1,45 +1,28 @@
-/*
- * Copyright (C) 2007-2008 Artima, Inc. All rights reserved.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Example code from:
- *
- * Programming in Scala (First Edition, Version 6)
- * by Martin Odersky, Lex Spoon, Bill Venners
- *
- * http://booksites.artima.com/programming_in_scala
- */
-
 package circuitsimulation.circuitelement;
 
 import circuitsimulation.Circuit
 
-trait Adders extends Circuit {
+trait Adders extends Circuit with CommonGates{
+  
+  /**
+   * Half adder consists of an XOR gate and an AND gate.
+   * The output of the XOR gate is the sum.
+   * And the output of the AND gate is the carry.
+   */
   def halfAdder(a: Wire, b: Wire, s: Wire, c: Wire) {
-    val d, e = new Wire
-    norGate(a, b, d)
-    nandGate(a, b, c)
-    inverter(c, e)
-    nandGate(d, e, s)
+    xorGate(a, b, s)
+    andGate(a,b,c) 
   }
 
+  /**
+   * A full adder is built with two OR gates.
+   */
   def fullAdder(a: Wire, b: Wire, cin: Wire,
       sum: Wire, cout: Wire) {
 
     val s, c1, c2 = new Wire
     halfAdder(a, cin, s, c1)
     halfAdder(b, s, sum, c2)
-    norGate(c1, c2, cout)
+    orGate(c1, c2, cout)
   }
 }
