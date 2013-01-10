@@ -57,7 +57,7 @@ object ParallelSimulation {
     private var agenda: List[WorkItem] = List()
     
     //List of simulants.
-    private var allSimulants: List[Actor] = List()
+    var allSimulants: List[Simulant] = List()
     
     //List of simulants that have not responded to the clock's Ping in each stage.
     //At the beginning of each stage, all simulants are put into this list.
@@ -208,6 +208,26 @@ object ParallelSimulation {
           exit()
       }
     }
+    
+   /**
+    * Reset the simulation.
+    * Empty the task list and set the current time to 0 again.
+    * Also call reset() and restart on all simulants.
+    * Only call this method when the simulation already exited
+    */
+    def reset()
+    {
+      running = false
+      currentTime = 0
+      busySimulants = Set.empty
+      agenda = List()
+      restart()
+      for(simulant<-allSimulants)
+      {
+        simulant.reset()
+        simulant.restart()
+      }
+    }
   }
 
   /**
@@ -219,6 +239,7 @@ object ParallelSimulation {
     val clock: Clock
     def handleSimMessage(msg: Any)
     def simStarting() {}
+    def reset(){}
     def act() {
       loop {
         react {

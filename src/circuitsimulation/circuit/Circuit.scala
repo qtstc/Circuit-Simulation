@@ -66,6 +66,9 @@ class Circuit(finishSimulation:Int) {
           SignalChanged(this, sigVal),
           obs)
     }
+    
+    def set(sig:Boolean){sigVal = sig}
+    override def reset() {sigVal = false}
     override def simStarting() { signalObservers() }
     def addObserver(obs: Actor) {
       observers = obs :: observers
@@ -97,6 +100,8 @@ class Circuit(finishSimulation:Int) {
             out)
       }
     }
+    
+    override def reset(){s1 = false;s2 = false}
   }
   
   def norGate(in1: Wire, in2: Wire, output: Wire) =
@@ -137,6 +142,20 @@ class Circuit(finishSimulation:Int) {
   }
   
   def probe(wire: Wire) = new Probe(wire)
+  
+    /**
+   * Reset the circuit.
+   * Reset all components in the circuit to false
+   * and remove all tracking histories.
+   * Need to call set() on each input wire to change
+   * the inputs before calling start() to run the simulation
+   * again.
+   * Only call this method when the simulation is finished.
+   */
+  def reset()
+  {
+    clock.reset();
+  }
 
   def start() { clock ! Start }
 }
