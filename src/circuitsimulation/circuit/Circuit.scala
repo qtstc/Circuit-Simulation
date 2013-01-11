@@ -45,6 +45,104 @@ class Circuit(finishSimulation:Int) {
   val NorGateDelay = 3
   val NandGateDelay = 3
 
+  //Keeps track of the wires that are used as input.
+  //This variable is not updated in real time.
+  //It is only updated every time getInputNumber() is called.
+  private var inputWires:List[Wire] =List()
+  
+   /**
+   * Reset the circuit.
+   * Reset all components in the circuit to false
+   * and remove all tracking histories.
+   * Need to call set() on each input wire to change
+   * the inputs before calling start() to run the simulation
+   * again.
+   * Only call this method when the simulation is finished.
+   */
+  def reset(){clock.reset();}
+  
+  /**
+   * Set the analyzer for this circuit.
+   * An analyzer is used to run and analyze the circuit.
+   * Use null if no analyzer is needed.
+   */
+  def setAnalyzer(analyzer:Actor)
+  {
+    clock.setAnalyzer(analyzer)
+  }
+  
+  /**
+   * Get the log of this simulation.
+   * To be called after the simulation is finished.
+   */
+  def getLog() =
+  {
+    def sortWireLog(o:List[WireLog]):List[WireLog]= o.sortWith((w1,w2) => w1.wireName < w2.wireName)
+    
+    val wires = clock.getSimulantsWithType(SimulantType.isTracked)
+    var inputLog = List[WireLog]();
+    var outputLog = List[WireLog]();
+    var trackedLog = List[WireLog]();
+    for(w<-wires)
+    {
+     val wire = w.asInstanceOf[Wire] 
+     wire.simulantType match
+     {
+       case SimulantType.INPUT_WIRE =>
+         inputLog = wire.getWireLog()::inputLog
+       case SimulantType.OUTPUT_WIRE =>
+         outputLog = wire.getWireLog::outputLog
+       case SimulantType.TRACKED_WIRE =>
+         trackedLog = wire.getWireLog::trackedLog
+     }
+    }
+    
+    SimulationLog(sortWireLog(inputLog),sortWireLog(outputLog),sortWireLog(trackedLog),clock.getClockLog())
+  }
+  
+  /**
+   * Get the state of the clock.
+   * Used to hide the implementation of clock
+   * from users of this class.
+   */
+  def getClockState() = clock.getState
+  
+  /**
+   * Return the number of inputs the circuit has.
+   * This must be called before calling setInputs()
+   */
+  def getInputNumber()=
+  {
+    //Update the inputWires variable first
+    val unconvertedList = clock.getSimulantsWithType((s:SimulantType) => (s == SimulantType.INPUT_WIRE))
+    inputWires = unconvertedList.map((s:Simulant) => s.asInstanceOf[Wire])
+    //Sort the wires by their names.
+    inputWires = inputWires.sortWith((w1,w2)=>w1.wireName < w2.wireName)
+    inputWires.length
+  }
+  
+  /**
+   * Set the inputs of the wires.
+   * Need to call getInputNumber() before calling this method.
+   * The length of the list of booleans passed to this method
+   * must be the same as the value returned from getInputNumber().
+   * Each entry of the list will be assigned to a wire of the
+   * input wires.
+   */
+  def setInputs(values:List[Boolean])
+  {
+    //First check whether the input has the right length
+    assert(values.length == inputWires.length)
+    for(i <-0 until inputWires.length)
+      inputWires(i).sigVal = values(i)
+  }
+  
+  
+  
+  def stop(){clock ! Stop}
+  
+  def start() { clock ! Start }
+  
   class Wire(name: String,wType: SimulantType, init: Boolean) extends Simulant {
     
     def this(name:String, wType: SimulantType){this(name,wType,false)}
@@ -56,6 +154,8 @@ class Circuit(finishSimulation:Int) {
     clock.add(this)
 
     var sigVal = init
+    val wireName = name
+    
     private var observers: List[Actor] = List()
     
     protected def handleSimMessage(msg: Any,time:Int) 
@@ -90,7 +190,6 @@ class Circuit(finishSimulation:Int) {
     
     
     def simulantType = wType
-    def set(sig:Boolean){sigVal = sig}
     override def reset() {sigVal = false;wireLog = List()}
     override def simStarting() { signalObservers();log(WireDelay)}
     def addObserver(obs: Actor) {
@@ -148,85 +247,4 @@ class Circuit(finishSimulation:Int) {
       protected val delay = InverterDelay
       protected def computeOutput(s1: Boolean, ignored: Boolean) = !s1
     }
-
-  /*
-  /**
-   * Probe class is used to make users aware of the state 
-   * of a Wire instance. It is created as a class because 
-   * we sometimes need to check whether a simulant instance
-   * is a valid circuit element or only a probe.
-   */
-  protected class Probe(wire: Wire) extends Simulant
-  {
-    val clock = Circuit.this.clock
-    clock.add(this)
-    wire.addObserver(this)
-    def handleSimMessage(msg: Any,time:Int) {
-      msg match {
-        case SignalChanged(w, s) =>
-          println("signal " + w + " changed to " + s)
-      }
-    }
-  }
-  
-  def probe(wire: Wire) = new Probe(wire)
-  */
-  
-    /**
-   * Reset the circuit.
-   * Reset all components in the circuit to false
-   * and remove all tracking histories.
-   * Need to call set() on each input wire to change
-   * the inputs before calling start() to run the simulation
-   * again.
-   * Only call this method when the simulation is finished.
-   */
-  def reset(){clock.reset();}
-  
-  /**
-   * Set the analyzer for this circuit.
-   * An analyzer is used to run and analyze the circuit.
-   * Use null if no analyzer is needed.
-   */
-  def setAnalyzer(analyzer:Actor)
-  {
-    clock.setAnalyzer(analyzer)
-  }
-  
-  /**
-   * Get the log of this simulation.
-   * To be called after the simulation is finished.
-   */
-  def getLog() =
-  {
-    val wires = clock.getSimulantsWithType(SimulantType.isTracked)
-    var inputLog = List[WireLog]();
-    var outputLog = List[WireLog]();
-    var trackedLog = List[WireLog]();
-    for(w<-wires)
-    {
-     val wire = w.asInstanceOf[Wire] 
-     wire.simulantType match
-     {
-       case SimulantType.INPUT_WIRE =>
-         inputLog = wire.getWireLog()::inputLog
-       case SimulantType.OUTPUT_WIRE =>
-         outputLog = wire.getWireLog::outputLog
-       case SimulantType.TRACKED_WIRE =>
-         trackedLog = wire.getWireLog::trackedLog
-     }
-    }
-    SimulationLog(inputLog,outputLog,trackedLog,clock.getClockLog())
-  }
-  
-  /**
-   * Get the state of the clock.
-   * Used to hide the implementation of clock
-   * from users of this class.
-   */
-  def getClockState() = clock.getState
-  
-  def stop(){clock ! Stop}
-  
-  def start() { clock ! Start }
 }

@@ -27,6 +27,11 @@ import scala.actors.Actor
 import Actor._
 import circuitsimulation.circuit.SimulantType._
 
+/**
+ * Used for running parallel simulation. 
+ * Original code is from Programming in Scala.
+ * Added mechanisms for logging and analyze the simulation.
+ */
 object ParallelSimulation {
   
   //Message sent to each simulants at the end of each stage.
@@ -258,12 +263,14 @@ object ParallelSimulation {
         
     /**
      * Set the analyzer of this simulation.
-     * An analyzer is used to run a simulation multiple times
+     * An analyzer is used to run simulations
      * and analyze the result.
      */
     def setAnalyzer(analyzer:Actor)
     {
-       this.analyzer = analyzer
+      if(this.analyzer != null && analyzer != null)
+       throw new IllegalArgumentException("Mutiple Analyzer instances are accessing one Circuit instance.")
+      this.analyzer = analyzer
     }
     
    /**

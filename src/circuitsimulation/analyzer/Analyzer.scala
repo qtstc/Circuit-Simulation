@@ -6,14 +6,25 @@ import scala.actors.Actor
 import Actor._
 import circuitsimulation.circuit._
 
+/**
+ * A class for analyzing instances of the Circuit class.
+ * The analysis depends on the implementation of sub classes.
+ * 
+ * If the Circuit instance passed to the constructor of this
+ * class is modified after an instance of this class is
+ * initialized, the behavior of that instance is undefined.
+ * 
+ * Also, creating two Analyzers with the same Circuit instance
+ * will cause an error.
+ */
 abstract class Analyzer(circuit:Circuit) extends Actor{
   
-  var count:Int = 0
   circuit.setAnalyzer(this)
   start()
   
   protected def reactToFinishedSimulation()
   protected def processLog(log:SimulationLog)  
+  def startSimulation()
   
   def act()
   {
@@ -31,10 +42,5 @@ abstract class Analyzer(circuit:Circuit) extends Actor{
           reactToFinishedSimulation()
       }
     }
-  }
-  
-  def startSimulation()
-  {
-    circuit.start()
   }
 }

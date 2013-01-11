@@ -7,9 +7,14 @@ import Actor._
 
 class SingleRunAnalyzer(circuit:Circuit) extends Analyzer(circuit) {
   
-  protected def reactToFinishedSimulation
+  protected def reactToFinishedSimulation()
   {
     exit()
+  }
+  
+  def startSimulation()
+  {
+    circuit.start()
   }
   
   protected def processLog(log:SimulationLog)  
@@ -25,6 +30,9 @@ class SingleRunAnalyzer(circuit:Circuit) extends Analyzer(circuit) {
       println(wireLogToString(w, endTime))
   }
   
+  /**
+   * Convert a single WireLog entry to one line of text.
+   */
   private def wireLogToString(log:WireLog,endTime:Int) =
   {
     var result = log.wireName
