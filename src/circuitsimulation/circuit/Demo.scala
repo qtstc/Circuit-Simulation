@@ -9,13 +9,13 @@ object Demo {
     val circuit = new Circuit() with CommonGates
     import circuit._
     
-    val in1 = new Wire("InputOne",true)
-    val in2 = new Wire("Output")
+    val in1 = new Wire("Input1",SimulantType.INPUT_WIRE,true)
+    val in2 = new Wire("Input2",SimulantType.INPUT_WIRE,true)
+    val out1 = new Wire("Output1",SimulantType.OUTPUT_WIRE)
+    val out2 = new Wire("Output2",SimulantType.OUTPUT_WIRE)
     
-    probe(in1)
-    probe(in2)
-    inverter(in1,in2)
-    
+    xorGate(in1,in2,out1)
+    orGate(in1,in2,out2)
     //circuit.start
     
     val analyzer = new SingleRunAnalyzer(circuit)

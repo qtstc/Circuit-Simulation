@@ -7,23 +7,39 @@ import Actor._
 
 class SingleRunAnalyzer(circuit:Circuit) extends Analyzer(circuit) {
   
-  private var logHistory:List[Log] = List()
-  
   protected def reactToFinishedSimulation
   {
-    printLog()
     exit()
   }
   
-  protected def log(l:Log)
+  protected def processLog(log:SimulationLog)  
   {
-    logHistory = l::logHistory
+    val endTime = log.clockLog.last.time
+    
+    println("Inputs:")
+    for(w <- log.inputLog)
+      println(wireLogToString(w,endTime))
+    
+    println("Outputs:")
+    for(w <-log.outputLog)
+      println(wireLogToString(w, endTime))
   }
   
-  def printLog()
+  private def wireLogToString(log:WireLog,endTime:Int) =
   {
-      val reverseList = logHistory.reverse
-      for(log <- reverseList)
-        println(log.msg)
+    var result = log.wireName
+    var currentList = log.wLog
+    var lastSig = false
+    for(time<-1 to endTime)
+    {
+      val parts = currentList.span((entry:WireLogEntry) => entry.time == time)
+      if(parts._1.length > 0)
+      {
+        lastSig = parts._1.last.value
+        currentList = parts._2
+      }
+      result += "\t"+lastSig
+    }
+    result
   }
 }

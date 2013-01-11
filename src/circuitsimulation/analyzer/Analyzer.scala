@@ -4,6 +4,7 @@ import circuitsimulation.circuit.ParallelSimulation._
 import circuitsimulation.circuit._
 import scala.actors.Actor
 import Actor._
+import circuitsimulation.circuit._
 
 abstract class Analyzer(circuit:Circuit) extends Actor{
   
@@ -12,7 +13,7 @@ abstract class Analyzer(circuit:Circuit) extends Actor{
   start()
   
   protected def reactToFinishedSimulation()
-  protected def log(l:Log)
+  protected def processLog(log:SimulationLog)  
   
   def act()
   {
@@ -20,12 +21,13 @@ abstract class Analyzer(circuit:Circuit) extends Actor{
     {
       react
       {
-        case l:Log =>
-          log(l)
         case Finished =>
+          processLog(circuit.getLog())
+          circuit.stop()
+        case Finalized =>
           //Check back if the previous simulation is not done yet
           if(circuit.getClockState != Actor.State.Terminated)
-            self ! Finished
+            self ! Finalized
           reactToFinishedSimulation()
       }
     }
