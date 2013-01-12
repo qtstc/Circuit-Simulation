@@ -1,0 +1,5 @@
+package quinemccluskey
+
+class Formula {
+
+}
