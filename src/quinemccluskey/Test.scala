@@ -1,13 +1,15 @@
 package quinemccluskey
 
 import quinemccluskey._
+import scala.collection.mutable.ListBuffer
 
 object Test{
   def main(args: Array[String]) {
-    
-    val t1 = new Term(TRUE,FALSE,DONT_CARE)
-    val t2 = new Term(TRUE,FALSE,DONT_CARE)
-    println(t1 == t2)
+	  	var inputs = ListBuffer[Term](new Term("0000"),new Term("0001"),new Term("0010"),new Term("0011"),new Term("0101"),new Term("0111"),new Term("1000"),new Term("1010"),new Term("1100"),new Term("1101"),new Term("1111"))
+        val f = new Formula(inputs)
+		f.reduceToPrimeImplicants();
+		System.out.println(f);
+		f.reducePrimeImplicantsToSubset();
+		System.out.println(f);
   }
 }
-

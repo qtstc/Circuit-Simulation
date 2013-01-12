@@ -23,8 +23,8 @@ object Term
     var diffNum = -1
     for(i<-0 until t1.length)
     {
-      val b1 = t1.bits(i)
-      val b2 = t2.bits(i)
+      val b1 = t1(i)
+      val b2 = t2(i)
       if(b1 != b2)
       {
         if(b1 == DONT_CARE || b2 == DONT_CARE)
@@ -68,7 +68,7 @@ class Term(termBits:Array[Bit]){
   def this(bitString:String){this(bitString.toArray.map(Bit.apply))}
   def this(t:Term){this(t.bits.clone)}
   
-  val bits = termBits
+  private val bits = termBits
   val length = bits.length
   
   override def toString = 
@@ -85,6 +85,8 @@ class Term(termBits:Array[Bit]){
     this
   }
   
+  def apply(i:Int) = bits(i)
+  
   def ==(t:Term):Boolean = 
   {
     if(length != t.length)
@@ -93,5 +95,15 @@ class Term(termBits:Array[Bit]){
       if(bits(i) != t.bits(i))
         return false
     return true
+  }
+  
+  def implies(t:Term) : Boolean =
+  { 
+    for(i<- 0 until length) 
+    {
+      if (bits(i) != DONT_CARE && bits(i) != t.bits(i)) 
+       return false
+    }
+    return true;
   }
 }
