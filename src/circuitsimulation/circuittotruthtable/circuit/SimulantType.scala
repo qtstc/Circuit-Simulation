@@ -8,16 +8,16 @@ package circuitsimulation.circuittotruthtable.circuit
  */
 object SimulantType extends Enumeration {
   type SimulantType = Value
-  val INPUT_WIRE, OUTPUT_WIRE, TRACKED_WIRE, IGNORED_WIRE,NOT_A_WIRE  = Value
-  
+  val INPUT_WIRE, OUTPUT_WIRE, TRACKED_WIRE, IGNORED_WIRE, NOT_A_WIRE = Value
+
   /**
    * Defines whether a simulant of certain type should be tracked.
    */
-  def isTracked(sType:SimulantType):Boolean = sType match {
-  case INPUT_WIRE => true
-  case OUTPUT_WIRE => true
-  case TRACKED_WIRE => true
-  case IGNORED_WIRE => false
-  case NOT_A_WIRE => false
-}
+  def isTracked(sType: SimulantType): Boolean = sType match {
+    case INPUT_WIRE => true
+    case OUTPUT_WIRE => true
+    case TRACKED_WIRE => true
+    case IGNORED_WIRE => false
+    case NOT_A_WIRE => false
+  }
 }
