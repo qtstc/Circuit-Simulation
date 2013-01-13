@@ -26,6 +26,7 @@ package circuitsimulation.circuittotruthtable.circuit
 import scala.actors.Actor
 import ParallelSimulation._
 import circuitsimulation.circuittotruthtable.circuit.SimulantType._;
+import quinemccluskey.FALSE
 
 case class WireLogEntry(value:Boolean,time:Int)
 case class WireLog(wireName:String,wLog:List[WireLogEntry])
@@ -137,10 +138,58 @@ class Circuit(finishSimulation:Int) {
       inputWires(i).sigVal = values(i)
   }
   
+  /**
+   * Check whether the circuit has a loop
+   */
+  def hasLoop():Boolean = 
+  {
+    var allSimulants = clock.getSimulantsWithType(s=>true).toSet
+    allSimulants -= DummyWire
+    var stack = List[Simulant]()
+    
+    def dfs(s:Simulant):Boolean = s match
+    {
+      case w:Wire =>
+        if(stack.contains(w))
+          true
+        else
+        {
+        	stack = w::stack
+        	val result = w.observers.foldLeft(false)((lastResult,observer) => (lastResult || dfs(observer)))
+        	stack = stack.tail
+        	allSimulants -= w
+        	result
+        }
+      case g:Gate =>
+        if(stack.contains(g))
+          true
+        else
+        {
+        	stack = g::stack
+        	val result =dfs(g.output)
+        	stack = stack.tail
+        	allSimulants -= g
+        	result
+        }
+    }
+        
+    while(allSimulants.size != 0)
+    {
+      val s = allSimulants.first
+      val result = dfs(s)
+      if(result)
+        return true
+    }
+    return false
+  }
   
-  
+  /**
+   * Stop the simulation
+   */
   def stop(){clock ! Stop}
-  
+  /**
+   * Start the simulation
+   */
   def start() { clock ! Start }
   
   class Wire(name: String,wType: SimulantType, init: Boolean) extends Simulant {
@@ -156,7 +205,7 @@ class Circuit(finishSimulation:Int) {
     var sigVal = init
     val wireName = name
     
-    private var observers: List[Actor] = List()
+    var observers: List[Simulant] = List()
     
     protected def handleSimMessage(msg: Any,time:Int) 
     {
@@ -192,14 +241,14 @@ class Circuit(finishSimulation:Int) {
     def simulantType = wType
     override def reset() {sigVal = false;wireLog = List()}
     override def simStarting() { signalObservers();log(WireDelay)}
-    def addObserver(obs: Actor) {
+    def addObserver(obs: Simulant) {
       observers = obs :: observers
     }
     override def toString = "Wire(" + name + ")"
     def getWireLog() = WireLog(name,wireLog.reverse)
   }
 
-  private object DummyWire extends Wire("dummy")
+  object DummyWire extends Wire("dummy")
 
   abstract class Gate(in1: Wire, in2: Wire, out: Wire)
     extends Simulant {
@@ -207,6 +256,7 @@ class Circuit(finishSimulation:Int) {
     protected val delay: Int
     protected val clock = Circuit.this.clock
     
+    val output = out
     clock.add(this)
     in1.addObserver(this)
     in2.addObserver(this)
@@ -222,12 +272,13 @@ class Circuit(finishSimulation:Int) {
             s2 = sig
           clock ! AfterDelay(delay,
             SetSignal(computeOutput(s1, s2)),
-            out)
+            output)
       }
     }
     
     def simulantType = SimulantType.NOT_A_WIRE;
     override def reset(){s1 = false;s2 = false}
+    override def toString() = {"Gate"}
   }
   
   def norGate(in1: Wire, in2: Wire, output: Wire) =

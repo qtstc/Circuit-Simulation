@@ -18,13 +18,14 @@ object Demo {
     val out2 = new Wire("output2",SimulantType.OUTPUT_WIRE)
     
     xorGate(in1,in2,t1)
-    orGate(in1,in2,t2)
-    andGate(t1,t2,out)
+    norGate(in1,in2,t2)
+    nandGate(in1,t2,out)
     nandGate(out,in3,out2)
     
+    //val analyzer = new MultipleRunAnalyzer(circuit)
+    //analyzer.startSimulation
     
-    val analyzer = new MultipleRunAnalyzer(circuit)
-    analyzer.startSimulation
+    println(hasLoop())
   }
 }
 
