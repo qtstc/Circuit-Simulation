@@ -68,7 +68,7 @@ class Term(termBits:Array[Bit]){
   def this(bitString:String){this(bitString.toArray.map(Bit.apply))}
   def this(t:Term){this(t.bits.clone)}
   
-  private val bits = termBits
+  val bits = termBits
   val length = bits.length
   
   override def toString = 
@@ -96,6 +96,14 @@ class Term(termBits:Array[Bit]){
         return false
     return true
   }
+  
+  override def equals(that:Any):Boolean = that match
+  {
+    case t:Term => this == t
+    case _ => false
+  }
+  
+  override def hashCode = this.toString.hashCode
   
   def implies(t:Term) : Boolean =
   { 
