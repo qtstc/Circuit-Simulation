@@ -22,7 +22,7 @@ class MultipleRunAnalyzer(circuit: Circuit) extends Analyzer(circuit) {
   case class TruthTableColumn(columnName: String, cells: ListBuffer[Boolean])
 
   private val inputNumber = circuit.getInputNumber() //The number of inputs
-  private val inputCombinations = getCombinations(inputNumber)
+  private val inputCombinations = getCombinations(inputNumber) //All possible input combinations
 
   //Used to keep track of the progress of simulation. Used as an index for inputCombinations
   private var counter = 0
@@ -48,7 +48,7 @@ class MultipleRunAnalyzer(circuit: Circuit) extends Analyzer(circuit) {
     circuit.start()
   }
 
-  protected def reactToFinishedSimulation() {
+  protected def reactToFinalizedSimulation() {
     //If there are still more input combinations to be simulated
     if (counter != inputCombinations.length) {
       circuit.reset()

@@ -144,6 +144,7 @@ object Formula {
     }
 
 }
+
 class Formula(newTerms: List[Term]) {
 
   val terms: List[Term] = newTerms

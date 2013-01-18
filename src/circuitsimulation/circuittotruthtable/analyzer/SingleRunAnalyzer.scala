@@ -5,9 +5,15 @@ import circuitsimulation.circuittotruthtable.circuit._
 import scala.actors.Actor
 import Actor._
 
+/**
+ * A sub class of Analyzer that runs simulation on
+ * a circuit instance only once.
+ * This analyzer keeps track of the signal of each
+ * tracked components of the circuit at every stage.
+ */
 class SingleRunAnalyzer(circuit: Circuit) extends Analyzer(circuit) {
 
-  protected def reactToFinishedSimulation() {
+  protected def reactToFinalizedSimulation() = {
     exit()
   }
 
@@ -22,13 +28,17 @@ class SingleRunAnalyzer(circuit: Circuit) extends Analyzer(circuit) {
     for (w <- log.inputLog)
       println(wireLogToString(w, endTime))
 
+    println("Tracked:")
+    for (w <- log.trackedLog)
+      println(wireLogToString(w, endTime))
+
     println("Outputs:")
     for (w <- log.outputLog)
       println(wireLogToString(w, endTime))
   }
 
   /**
-   * Convert a single WireLog entry to one line of text.
+   * Convert a single WireLog instance to one line of text.
    */
   private def wireLogToString(log: WireLog, endTime: Int) =
     {

@@ -32,6 +32,30 @@ case class WireLogEntry(value: Boolean, time: Int)
 case class WireLog(wireName: String, wLog: List[WireLogEntry])
 case class SimulationLog(inputLog: List[WireLog], outputLog: List[WireLog], trackedLog: List[WireLog], clockLog: List[ClockLogEntry])
 
+/**
+ * This class groups the various Actor instances involved in
+ * circuit simulation together.
+ * After constructing a valid circuit,
+ * pass the instance of this class to the constructor
+ * of the Analyzer class to analyze the behavior of the circuit.
+ *
+ * finisheSimulation: Int determines when the simulation will
+ * finish. If it is not set, the simulation will finish
+ * after the signals have traveled through the circuit.
+ * However, the simulation will never finish if there is a
+ * loop in the circuit. It is advised to call hasLoop() on circuit
+ * before starting the simulation. And if a loop is detected,
+ * set the finishSimulation variable to end the simulation at a
+ * certain stage.
+ *
+ * To build a circuit, call the inverter(), norGate(), nandGate()
+ * function. These functions take Wire instances, which are used
+ * to connect the gates.
+ *
+ * If the user wants to add additional circuit element to
+ * the circuit, extend the traits found in
+ * circuitsimulation.circuittotruthtable.circuit.elements.
+ */
 class Circuit(finishSimulation: Int) {
   def this() { this(-1) }
 

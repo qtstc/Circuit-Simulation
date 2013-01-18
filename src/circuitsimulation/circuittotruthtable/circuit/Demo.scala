@@ -25,7 +25,6 @@ object Demo {
     println(hasLoop())
     val analyzer = new MultipleRunAnalyzer(circuit)
     analyzer.startSimulation
-
   }
 }
 
