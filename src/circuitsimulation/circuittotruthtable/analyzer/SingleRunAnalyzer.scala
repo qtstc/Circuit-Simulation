@@ -13,9 +13,14 @@ import Actor._
  */
 class SingleRunAnalyzer(circuit: Circuit) extends Analyzer(circuit) {
 
+  private var singleResult: String = "Error:simulation is not finished yet."
+
   protected def reactToFinalizedSimulation() = {
+    println(simulationResult)
     exit()
   }
+
+  protected def simulationResult = singleResult
 
   def startSimulation() {
     circuit.start()
@@ -24,17 +29,17 @@ class SingleRunAnalyzer(circuit: Circuit) extends Analyzer(circuit) {
   protected def processLog(log: SimulationLog) {
     val endTime = log.clockLog.last.time
 
-    println("Inputs:")
+    singleResult = "Inputs:\n"
     for (w <- log.inputLog)
-      println(wireLogToString(w, endTime))
+      singleResult += wireLogToString(w, endTime) + "\n"
 
-    println("Tracked:")
+    singleResult += "Tracked:\n"
     for (w <- log.trackedLog)
-      println(wireLogToString(w, endTime))
+      singleResult += wireLogToString(w, endTime) + "\n"
 
-    println("Outputs:")
+    singleResult += "Outputs:\n"
     for (w <- log.outputLog)
-      println(wireLogToString(w, endTime))
+      singleResult += wireLogToString(w, endTime) + "\n"
   }
 
   /**

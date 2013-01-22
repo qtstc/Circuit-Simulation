@@ -23,7 +23,7 @@ object Demo {
     nandGate(out, in3, out2)
 
     println(hasLoop())
-    val analyzer = new MultipleRunAnalyzer(circuit)
+    val analyzer = new SingleRunAnalyzer(circuit)
     analyzer.startSimulation
   }
 }

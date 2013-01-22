@@ -38,6 +38,8 @@ class MultipleRunAnalyzer(circuit: Circuit) extends Analyzer(circuit) {
     nextRun()
   }
 
+  protected def simulationResult = truthTableToString
+
   /**
    * First set the inputs of the circuit to a new set of values.
    * Then start the simulation.
@@ -54,7 +56,7 @@ class MultipleRunAnalyzer(circuit: Circuit) extends Analyzer(circuit) {
       circuit.reset()
       nextRun()
     } else {
-      println(truthTableToString())
+      println(simulationResult)
       exit()
     }
   }
@@ -89,7 +91,7 @@ class MultipleRunAnalyzer(circuit: Circuit) extends Analyzer(circuit) {
    * Convert truth table data to string.
    * Only to be called when all runs are finished.
    */
-  private def truthTableToString() =
+  def truthTableToString() =
     {
       var text = ""
 

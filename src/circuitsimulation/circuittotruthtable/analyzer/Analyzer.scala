@@ -56,4 +56,24 @@ abstract class Analyzer(circuit: Circuit) extends Actor {
       }
     }
   }
+
+  /**
+   * Get the result of the simulation as a String.
+   * Only call this after the simulation is done.
+   * This method is designed to be used in the REPL,
+   * when the result is not printed automatically after
+   * the simulation is done.
+   */
+  def getSimulationResult(): String =
+    {
+      if (circuit.getClockState != Actor.State.Terminated)
+        "Error: simulation is not finished yet."
+      else
+        simulationResult
+    }
+
+  /**
+   * Result of the simulation as String.
+   */
+  protected def simulationResult: String
 }
